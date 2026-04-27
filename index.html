@@ -1,1 +1,656 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <meta name="description" content="Modrý Xuan - Viet Thai Food: autentická vietnamská a thajská kuchyně v Karlových Varech. Pho, letní závitky, zelené kari a tradiční speciality.">
+  <title>Modrý Xuan | Viet Thai Food Karlovy Vary</title>
+  <!-- Google Fonts + Font Awesome 6 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f0e0a;
+      color: #f5efe3;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* --- MEGA ÚVODNÍ ANIMACE (VIETNAMSKÁ ATMOSFÉRA) --- */
+    .intro-splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 20%, #1f4b2c, #0a1f0f);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1.2rem;
+      transition: opacity 1.2s cubic-bezier(0.2, 0.9, 0.4, 1.2), visibility 0s 1.3s;
+      backdrop-filter: blur(3px);
+    }
+
+    .intro-splash.hide {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .vietnam-scene {
+      font-size: 5rem;
+      filter: drop-shadow(0 15px 20px rgba(0,0,0,0.5));
+      animation: phoSpin 1.6s infinite alternate ease-in-out;
+    }
+
+    @keyframes phoSpin {
+      0% { transform: translateY(0px) rotate(-8deg); text-shadow: 0 0 0 #ffb347; }
+      100% { transform: translateY(-28px) rotate(8deg); text-shadow: 0 20px 25px #ffa500; }
+    }
+
+    .splash-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, #f9f2ce, #e0b354);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: goldShine 1.5s infinite alternate;
+    }
+
+    @keyframes goldShine {
+      0% { filter: drop-shadow(0 0 0px #f2cf7a); opacity: 0.9; }
+      100% { filter: drop-shadow(0 0 18px #f5bc45); opacity: 1; }
+    }
+
+    .splash-sub {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: #fff0cf;
+      background: rgba(0,0,0,0.45);
+      padding: 8px 28px;
+      border-radius: 60px;
+      backdrop-filter: blur(8px);
+    }
+
+    /* --- HLAVNÍ WEB (ZPOČÁTKU SKRYTÝ) --- */
+    .main-site {
+      opacity: 0;
+      transform: scale(0.98) translateY(20px);
+      transition: opacity 0.9s ease 0.2s, transform 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+    }
+
+    .main-site.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    /* --- NAVBAR (SKLENĚNÝ) --- */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(10, 14, 8, 0.94);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid #d6a147;
+      padding: 1rem 0;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    .nav-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 1.7rem;
+      font-weight: 800;
+      background: linear-gradient(125deg, #f3deba, #dba83d);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .lang-switch {
+      display: flex;
+      gap: 6px;
+      background: #1e2a1c;
+      padding: 5px 12px;
+      border-radius: 60px;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #e5dbbc;
+    }
+
+    .lang-btn.active {
+      background: #d6a147;
+      color: #0c140a;
+    }
+
+    /* --- HERO SEKCE --- */
+    .hero {
+      background: linear-gradient(115deg, #142110 0%, #2d3d26 100%);
+      padding: 90px 0;
+      position: relative;
+      color: #fdf6ea;
+    }
+
+    .hero::after {
+      content: "🍜🥢";
+      font-size: 200px;
+      opacity: 0.05;
+      position: absolute;
+      bottom: 0;
+      right: 10px;
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 50px;
+    }
+
+    .hero-content {
+      flex: 1.2;
+    }
+
+    .hero-badge {
+      background: #5a724780;
+      display: inline-block;
+      padding: 6px 24px;
+      border-radius: 60px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      font-size: 0.8rem;
+      backdrop-filter: blur(4px);
+    }
+
+    h1 {
+      font-size: 3.7rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .gold-accent {
+      color: #dbae59;
+    }
+
+    .cta-btn {
+      background: #d6a147;
+      padding: 14px 38px;
+      border-radius: 44px;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 30px;
+      transition: 0.2s;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+      text-decoration: none;
+      color: #0c140a;
+    }
+
+    .cta-btn:hover {
+      background: #c18f3a;
+      transform: translateY(-3px);
+    }
+
+    /* --- KARTY (SEKCE) --- */
+    .section-title {
+      font-size: 2.6rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #f0e2cf;
+    }
+
+    .section-sub {
+      color: #cabb97;
+      margin-bottom: 3rem;
+      font-weight: 500;
+    }
+
+    .grid-3, .grid-services, .grid-menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin: 40px 0 30px;
+    }
+
+    .card-viet {
+      background: #1f2a1aea;
+      backdrop-filter: blur(2px);
+      border-radius: 32px;
+      padding: 32px 24px;
+      transition: all 0.25s;
+      border: 1px solid #3f4a35;
+      box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+    }
+
+    .card-viet:hover {
+      transform: translateY(-8px);
+      border-color: #d6a147;
+      background: #2d3924;
+      box-shadow: 0 25px 35px rgba(0,0,0,0.3);
+    }
+
+    .card-viet i {
+      font-size: 2.8rem;
+      color: #d6a147;
+      margin-bottom: 20px;
+    }
+
+    .price {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #f0ca7c;
+      margin-top: 18px;
+      display: inline-block;
+    }
+
+    /* --- MAPA (LEAFLET) --- */
+    .map-wrapper {
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 22px 32px rgba(0,0,0,0.5);
+      height: 380px;
+      border: 1px solid #d6a147;
+    }
+
+    #vietMap {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .info-rows {
+      display: flex;
+      flex-wrap: wrap;
+      background: #181f13;
+      border-radius: 60px;
+      margin-top: 30px;
+      padding: 20px 32px;
+      justify-content: space-between;
+      gap: 20px;
+      border: 1px solid #3f4a35;
+    }
+
+    .info-icon {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 500;
+    }
+
+    .info-icon i {
+      font-size: 1.6rem;
+      color: #d6a147;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      background: #0b1009;
+      color: #cabb97;
+      font-weight: 500;
+      border-top: 1px solid #2c361f;
+    }
+
+    @media (max-width: 780px) {
+      h1 { font-size: 2.4rem; }
+      .section-title { font-size: 2rem; }
+      .info-rows { flex-direction: column; align-items: center; text-align: center; }
+      .hero-grid { gap: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MEGA ÚVODNÍ ANIMACE (VIETNAMSKÉ MOTIVY) -->
+<div class="intro-splash" id="introSplash">
+  <div class="vietnam-scene">
+    <i class="fas fa-utensils"></i> 🥢 <i class="fas fa-leaf"></i>
+  </div>
+  <div class="splash-title">Modrý Xuan</div>
+  <div class="splash-sub">VIET THAI FOOD • KARLOVY VARY</div>
+</div>
+
+<main class="main-site" id="mainSite">
+  <nav class="navbar">
+    <div class="container nav-flex">
+      <div class="logo"><i class="fas fa-crown"></i> Modrý Xuan</div>
+      <div class="lang-switch" id="langSwitch">
+        <button class="lang-btn active" data-lang="cs">🇨🇿 Čeština</button>
+        <button class="lang-btn" data-lang="en">🇬🇧 English</button>
+        <button class="lang-btn" data-lang="de">🇩🇪 Deutsch</button>
+        <button class="lang-btn" data-lang="ru">🇷🇺 Русский</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO ÚVODNÍ STRÁNKA -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge" data-translate="heroBadge">⭐ 4.9 • autentická vietnamská kuchyně</div>
+        <h1><span data-translate="heroTitle1">Modrý Xuan</span><br><span class="gold-accent" data-translate="heroTitle2">chuť Vietnamu a Thajska</span></h1>
+        <p data-translate="heroDesc" style="font-size:1.1rem; max-width:560px;">Voňavé pho, křupavé letní závitky a pravé thajské kari. Přijďte si vychutnat tradiční asijské speciality v příjemné atmosféře.</p>
+        <button onclick="document.getElementById('menuSection').scrollIntoView({behavior: 'smooth'});" class="cta-btn" data-translate="heroBtn">🍜 Objevte naše menu →</button>
+      </div>
+      <div style="flex:0.7; text-align:center;">
+        <i class="fas fa-bowl-food" style="font-size: 6rem; opacity: 0.25; color:#d6a147;"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- VÝHODY (PROČ ZROVNA MODRÝ XUAN) -->
+  <section>
+    <div class="container">
+      <h2 class="section-title" data-translate="advTitle">✨ Proč milujeme Modrý Xuan?</h2>
+      <div class="section-sub" data-translate="advSub">Kvalita, tradice a autentické receptury</div>
+      <div class="grid-3">
+        <div class="card-viet"><i class="fas fa-leaf"></i><h3 data-translate="adv1Title">Čerstvé suroviny</h3><p data-translate="adv1Desc">Každé ráno čerstvá zelenina a bylinky. Maso nejvyšší kvality.</p></div>
+        <div class="card-viet"><i class="fas fa-hand-sparkles"></i><h3 data-translate="adv2Title">Tradiční receptury</h3><p data-translate="adv2Desc">Vietnamské a thajské rodinné recepty, šéfkuchař přímo z Asie.</p></div>
+        <div class="card-viet"><i class="fas fa-heart"></i><h3 data-translate="adv3Title">Přátelský servis</h3><p data-translate="adv3Desc">Těšíme se na vás s úsměvem, rychlá obsluha a domácí atmosféra.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLUŽBY (CO NABÍZÍME NAVÍC) -->
+  <section>
+    <div class="container">
+      <h2 class="section-title" data-translate="servicesTitle">🥡 Nabízíme také</h2>
+      <div class="section-sub" data-translate="servicesSub">Pro vaše pohodlí</div>
+      <div class="grid-services">
+        <div class="card-viet"><i class="fas fa-truck"></i><h3 data-translate="serv1">Rozvoz jídla</h3><p data-translate="serv1Desc">Dovezeme jídlo až k vám domů. Objednávky přes Wolt, Foodora.</p></div>
+        <div class="card-viet"><i class="fas fa-utensils"></i><h3 data-translate="serv2">Vietnamský street food</h3><p data-translate="serv2Desc">Autentické pokrmy jako na ulicích Hanoje.</p></div>
+        <div class="card-viet"><i class="fas fa-calendar-alt"></i><h3 data-translate="serv3">Rezervace pro skupiny</h3><p data-translate="serv3Desc">Objednejte si stůl pro rodinné oslavy nebo firemní večírek.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASORTIMENT / HLAVNÍ MENU -->
+  <section id="menuSection">
+    <div class="container">
+      <h2 class="section-title" data-translate="menuTitle">🍜 Populární jídla</h2>
+      <div class="section-sub" data-translate="menuSub">Naše speciality, které musíte ochutnat</div>
+      <div class="grid-menu">
+        <div class="card-viet"><i class="fas fa-egg"></i><h3 data-translate="dish1">Nem Rán (smažené závitky)</h3><p data-translate="dish1Desc">Křupavé jarní závitky s mletým masem, zeleninou a rýžovými nudlemi.</p><span class="price">109 Kč</span></div>
+        <div class="card-viet"><i class="fas fa-shrimp"></i><h3 data-translate="dish2">Letní závitky s krevetami</h3><p data-translate="dish2Desc">Čerstvé rýžové papíry plněné krevetami, mátou a rýžovými nudlemi.</p><span class="price">109 Kč</span></div>
+        <div class="card-viet"><i class="fas fa-mug-hot"></i><h3 data-translate="dish3">Pho Bo (hlavní jídlo)</h3><p data-translate="dish3Desc">Tradiční vietnamská hovězí polévka s rýžovými nudlemi a bylinkami.</p><span class="price">159 Kč</span></div>
+        <div class="card-viet"><i class="fas fa-pepper-hot"></i><h3 data-translate="dish4">Zelené kari</h3><p data-translate="dish4Desc">Kokosové kari s kuřecím masem, lilkem, bazalkou a thajským kořením.</p><span class="price">165 Kč</span></div>
+        <div class="card-viet"><i class="fas fa-egg"></i><h3 data-translate="dish5">Pad Thai</h3><p data-translate="dish5Desc">Smažené rýžové nudle s krevetami, tofu, arašídy a tamarindem.</p><span class="price">159 Kč</span></div>
+        <div class="card-viet"><i class="fas fa-bowl-food"></i><h3 data-translate="dish6">Bun Cha</h3><p data-translate="dish6Desc">Grilované vepřové karbanátky s rýžovými nudlemi a bylinkami.</p><span class="price">179 Kč</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOOGLE MAPA (PŘESNÁ DATA Z MAPY) -->
+  <section>
+    <div class="container">
+      <h2 class="section-title" data-translate="mapTitle">📍 Kde nás najdete</h2>
+      <div class="section-sub" data-translate="mapSub">Moskevská 1526/44, Karlovy Vary – v centru města</div>
+      <div class="map-wrapper">
+        <div id="vietMap"></div>
+      </div>
+      <div class="info-rows">
+        <div class="info-icon"><i class="fas fa-map-marker-alt"></i> <span data-translate="address">Moskevská 1526/44, 360 01 Karlovy Vary 1</span></div>
+        <div class="info-icon"><i class="fas fa-phone-alt"></i> <a href="tel:+420776047999" style="color:#d6a147; text-decoration:none;">+420 776 047 999</a></div>
+        <div class="info-icon"><i class="fas fa-clock"></i> <span data-translate="hours">Po–Pá: 10:00–20:00 | So–Ne: 11:00–20:00</span></div>
+        <div class="info-icon"><i class="fab fa-facebook"></i> @modryxuanvietthaifood</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>🍜 Modrý Xuan – Viet Thai Food | <span data-translate="footerRights">Těšíme se na vaši návštěvu!</span></p>
+  </footer>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ---------- VÍCEJAZYČNÁ DATA (PODLE REÁLNÝCH ÚDAJŮ) ----------
+  const langContent = {
+    cs: {
+      heroBadge: "⭐ 4.9 • autentická vietnamská kuchyně",
+      heroTitle1: "Modrý Xuan",
+      heroTitle2: "chuť Vietnamu a Thajska",
+      heroDesc: "Voňavé pho, křupavé letní závitky a pravé thajské kari. Přijďte si vychutnat tradiční asijské speciality v příjemné atmosféře.",
+      heroBtn: "🍜 Objevte naše menu →",
+      advTitle: "✨ Proč milujeme Modrý Xuan?",
+      advSub: "Kvalita, tradice a autentické receptury",
+      adv1Title: "Čerstvé suroviny",
+      adv1Desc: "Každé ráno čerstvá zelenina a bylinky. Maso nejvyšší kvality.",
+      adv2Title: "Tradiční receptury",
+      adv2Desc: "Vietnamské a thajské rodinné recepty, šéfkuchař přímo z Asie.",
+      adv3Title: "Přátelský servis",
+      adv3Desc: "Těšíme se na vás s úsměvem, rychlá obsluha a domácí atmosféra.",
+      servicesTitle: "🥡 Nabízíme také",
+      servicesSub: "Pro vaše pohodlí",
+      serv1: "Rozvoz jídla",
+      serv1Desc: "Dovezeme jídlo až k vám domů. Objednávky přes Wolt, Foodora.",
+      serv2: "Vietnamský street food",
+      serv2Desc: "Autentické pokrmy jako na ulicích Hanoje.",
+      serv3: "Rezervace pro skupiny",
+      serv3Desc: "Objednejte si stůl pro rodinné oslavy nebo firemní večírek.",
+      menuTitle: "🍜 Populární jídla",
+      menuSub: "Naše speciality, které musíte ochutnat",
+      dish1: "Nem Rán (smažené závitky)",
+      dish1Desc: "Křupavé jarní závitky s mletým masem, zeleninou a rýžovými nudlemi.",
+      dish2: "Letní závitky s krevetami",
+      dish2Desc: "Čerstvé rýžové papíry plněné krevetami, mátou a rýžovými nudlemi.",
+      dish3: "Pho Bo (hlavní jídlo)",
+      dish3Desc: "Tradiční vietnamská hovězí polévka s rýžovými nudlemi a bylinkami.",
+      dish4: "Zelené kari",
+      dish4Desc: "Kokosové kari s kuřecím masem, lilkem, bazalkou a thajským kořením.",
+      dish5: "Pad Thai",
+      dish5Desc: "Smažené rýžové nudle s krevetami, tofu, arašídy a tamarindem.",
+      dish6: "Bun Cha",
+      dish6Desc: "Grilované vepřové karbanátky s rýžovými nudlemi a bylinkami.",
+      mapTitle: "📍 Kde nás najdete",
+      mapSub: "Moskevská 1526/44, Karlovy Vary – v centru města",
+      address: "Moskevská 1526/44, 360 01 Karlovy Vary 1",
+      hours: "Po–Pá: 10:00–20:00 | So–Ne: 11:00–20:00",
+      footerRights: "Těšíme se na vaši návštěvu!"
+    },
+    en: {
+      heroBadge: "⭐ 4.9 • authentic Vietnamese cuisine",
+      heroTitle1: "Modrý Xuan",
+      heroTitle2: "taste of Vietnam and Thailand",
+      heroDesc: "Fragrant pho, crispy summer rolls and authentic Thai curry. Come and enjoy traditional Asian specialities in a pleasant atmosphere.",
+      heroBtn: "🍜 Discover our menu →",
+      advTitle: "✨ Why we love Modrý Xuan",
+      advSub: "Quality, tradition and authentic recipes",
+      adv1Title: "Fresh ingredients",
+      adv1Desc: "Fresh vegetables and herbs every morning. Premium quality meat.",
+      adv2Title: "Traditional recipes",
+      adv2Desc: "Vietnamese and Thai family recipes, head chef directly from Asia.",
+      adv3Title: "Friendly service",
+      adv3Desc: "We look forward to your visit with a smile, fast service and a home-like atmosphere.",
+      servicesTitle: "🥡 We also offer",
+      servicesSub: "For your comfort",
+      serv1: "Food delivery",
+      serv1Desc: "We deliver food to your door. Orders via Wolt, Foodora.",
+      serv2: "Vietnamese street food",
+      serv2Desc: "Authentic dishes like on the streets of Hanoi.",
+      serv3: "Group reservations",
+      serv3Desc: "Book a table for family celebrations or corporate parties.",
+      menuTitle: "🍜 Popular dishes",
+      menuSub: "Our specialities you must try",
+      dish1: "Nem Rán (fried spring rolls)",
+      dish1Desc: "Crispy spring rolls with minced meat, vegetables and rice noodles.",
+      dish2: "Summer rolls with shrimps",
+      dish2Desc: "Fresh rice paper rolls with shrimps, mint and rice noodles.",
+      dish3: "Pho Bo (main dish)",
+      dish3Desc: "Traditional Vietnamese beef noodle soup with herbs.",
+      dish4: "Green Curry",
+      dish4Desc: "Coconut curry with chicken, eggplant, basil and Thai spices.",
+      dish5: "Pad Thai",
+      dish5Desc: "Stir-fried rice noodles with shrimp, tofu, peanuts and tamarind.",
+      dish6: "Bun Cha",
+      dish6Desc: "Grilled pork patties with rice noodles and herbs.",
+      mapTitle: "📍 Find us here",
+      mapSub: "Moskevská 1526/44, Karlovy Vary – city center",
+      address: "Moskevská 1526/44, 360 01 Karlovy Vary 1",
+      hours: "Mon–Fri: 10:00–20:00 | Sat–Sun: 11:00–20:00",
+      footerRights: "We look forward to your visit!"
+    },
+    de: {
+      heroBadge: "⭐ 4.9 • authentische vietnamesische Küche",
+      heroTitle1: "Modrý Xuan",
+      heroTitle2: "Geschmack von Vietnam und Thailand",
+      heroDesc: "Duftendes Pho, knusprige Sommerrollen und authentisches Thai-Curry. Genießen Sie traditionelle asiatische Spezialitäten in angenehmer Atmosphäre.",
+      heroBtn: "🍜 Entdecken Sie unser Menü →",
+      advTitle: "✨ Warum wir Modrý Xuan lieben",
+      advSub: "Qualität, Tradition und authentische Rezepte",
+      adv1Title: "Frische Zutaten",
+      adv1Desc: "Jeden Morgen frisches Gemüse und Kräuter. Fleisch höchster Qualität.",
+      adv2Title: "Traditionelle Rezepte",
+      adv2Desc: "Vietnamesische und thailändische Familienrezepte, Chefkoch direkt aus Asien.",
+      adv3Title: "Freundlicher Service",
+      adv3Desc: "Wir begrüßen Sie mit einem Lächeln, schneller Service und familiäre Atmosphäre.",
+      servicesTitle: "🥡 Wir bieten auch",
+      servicesSub: "Für Ihren Komfort",
+      serv1: "Essenslieferung",
+      serv1Desc: "Wir liefern Essen zu Ihnen nach Hause. Bestellungen über Wolt, Foodora.",
+      serv2: "Vietnamesisches Streetfood",
+      serv2Desc: "Authentische Gerichte wie auf den Straßen von Hanoi.",
+      serv3: "Gruppenreservierungen",
+      serv3Desc: "Reservieren Sie einen Tisch für Familienfeiern oder Firmenveranstaltungen.",
+      menuTitle: "🍜 Beliebte Gerichte",
+      menuSub: "Unsere Spezialitäten, die Sie probieren müssen",
+      dish1: "Nem Rán (frittierte Frühlingsrollen)",
+      dish1Desc: "Knusprige Frühlingsrollen mit Hackfleisch, Gemüse und Reisnudeln.",
+      dish2: "Sommerrollen mit Garnelen",
+      dish2Desc: "Frische Reispapierrollen mit Garnelen, Minze und Reisnudeln.",
+      dish3: "Pho Bo (Hauptgericht)",
+      dish3Desc: "Traditionelle vietnamesische Rindernudelsuppe mit Kräutern.",
+      dish4: "Grünes Curry",
+      dish4Desc: "Kokoscurry mit Huhn, Aubergine, Basilikum und thailändischen Gewürzen.",
+      dish5: "Pad Thai",
+      dish5Desc: "Gebratene Reisnudeln mit Garnelen, Tofu, Erdnüssen und Tamarinde.",
+      dish6: "Bun Cha",
+      dish6Desc: "Gegrillte Schweinefleischfrikadellen mit Reisnudeln und Kräutern.",
+      mapTitle: "📍 Hier finden Sie uns",
+      mapSub: "Moskevská 1526/44, Karlovy Vary – Stadtzentrum",
+      address: "Moskevská 1526/44, 360 01 Karlovy Vary 1",
+      hours: "Mo–Fr: 10:00–20:00 | Sa–So: 11:00–20:00",
+      footerRights: "Wir freuen uns auf Ihren Besuch!"
+    },
+    ru: {
+      heroBadge: "⭐ 4.9 • аутентичная вьетнамская кухня",
+      heroTitle1: "Modrý Xuan",
+      heroTitle2: "вкус Вьетнама и Таиланда",
+      heroDesc: "Ароматный фо бо, хрустящие летние роллы и настоящее тайское карри. Приходите насладиться традиционными азиатскими блюдами в приятной атмосфере.",
+      heroBtn: "🍜 Посмотреть меню →",
+      advTitle: "✨ Почему мы любим Modrý Xuan?",
+      advSub: "Качество, традиции и аутентичные рецепты",
+      adv1Title: "Свежие продукты",
+      adv1Desc: "Каждое утро свежие овощи и зелень. Мясо высшего качества.",
+      adv2Title: "Традиционные рецепты",
+      adv2Desc: "Вьетнамские и тайские семейные рецепты, шеф-повар из Азии.",
+      adv3Title: "Дружелюбный сервис",
+      adv3Desc: "Встречаем с улыбкой, быстрое обслуживание и домашняя атмосфера.",
+      servicesTitle: "🥡 Мы также предлагаем",
+      servicesSub: "Для вашего удобства",
+      serv1: "Доставка еды",
+      serv1Desc: "Доставим еду к вам домой. Заказы через Wolt, Foodora.",
+      serv2: "Вьетнамский стрит-фуд",
+      serv2Desc: "Аутентичные блюда, как на улицах Ханоя.",
+      serv3: "Бронирование для групп",
+      serv3Desc: "Забронируйте столик для семейных праздников или корпоративов.",
+      menuTitle: "🍜 Популярные блюда",
+      menuSub: "Наши фирменные блюда",
+      dish1: "Нем Ран (жареные роллы)",
+      dish1Desc: "Хрустящие весенние роллы с фаршем, овощами и рисовой лапшой.",
+      dish2: "Летние роллы с креветками",
+      dish2Desc: "Свежие роллы из рисовой бумаги с креветками, мятой и рисовой лапшой.",
+      dish3: "Фо Бо (основное блюдо)",
+      dish3Desc: "Традиционный вьетнамский суп с говядиной, рисовой лапшой и зеленью.",
+      dish4: "Зеленое карри",
+      dish4Desc: "Карри с кокосовым молоком, курицей, баклажанами, базиликом и тайскими специями.",
+      dish5: "Пад Тай",
+      dish5Desc: "Жареная рисовая лапша с креветками, тофу, арахисом и тамариндом.",
+      dish6: "Бун Ча",
+      dish6Desc: "Жареные свиные котлеты с рисовой лапшой и зеленью.",
+      mapTitle: "📍 Где нас найти",
+      mapSub: "Moskevská 1526/44, Карловы Вары – в центре города",
+      address: "Moskevská 1526/44, 360 01 Karlovy Vary 1",
+      hours: "Пн–Пт: 10:00–20:00 | Сб–Вс: 11:00–20:00",
+      footerRights: "Ждём вас в гости!"
+    }
+  };
+
+  let activeLanguage = 'cs';
+
+  function changeLanguage(lang) {
+    if (!langContent[lang]) return;
+    const dict = langContent[lang];
+    document.querySelectorAll('[data-translate]').forEach(el => {
+      const key = el.getAttribute('data-translate');
+      if (dict[key]) el.innerHTML = dict[key];
+    });
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      if (btn.dataset.lang === lang) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    activeLanguage = lang;
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => changeLanguage(btn.dataset.lang));
+  });
+
+  // Intro zmizí + mapa (přesné souřadnice Moskevská 1526/44, Karlovy Vary)
+  window.addEventListener('load', () => {
+    const introDiv = document.getElementById('introSplash');
+    const mainContainer = document.getElementById('mainSite');
+    setTimeout(() => {
+      introDiv.classList.add('hide');
+      mainContainer.classList.add('visible');
+    }, 1600);
+
+    // Souřadnice lokality
+    const map = L.map('vietMap').setView([50.228115, 12.862547], 17);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+    const marker = L.marker([50.228115, 12.862547]).addTo(map);
+    marker.bindPopup('<b>🍜 Modrý Xuan - Viet Thai Food</b><br>Moskevská 1526/44<br>📞 +420 776 047 999<br>⭐ 4.9').openPopup();
+    setTimeout(() => map.invalidateSize(), 200);
+    window.addEventListener('resize', () => map.invalidateSize());
+  });
+</script>
+</body>
+</html>
